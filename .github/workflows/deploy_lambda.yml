@@ -1,0 +1,38 @@
+name: Build and deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -y python3-pip && \
+          pip3 install awscli --upgrade --user && \
+          echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && \
+          source ~/.bashrc
+
+      - name: Deploy to AWS Lambda
+        run: |
+          aws cloudformation package \
+            --template-file aws/lambda_template.yml \
+            --s3-bucket gutenberg-poc \
+            --output-template-file packaged.yaml
+          aws cloudformation deploy \
+            --template-file packaged.yaml \
+            --stack-name gutenberg-poc-stack \
+            --capabilities CAPABILITY_IAM
