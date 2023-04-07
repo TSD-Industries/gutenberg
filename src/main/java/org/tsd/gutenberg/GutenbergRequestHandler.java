@@ -5,12 +5,12 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 
-public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
+public class GutenbergRequestHandler implements RequestHandler<APIGatewayProxyRequestEvent, Object> {
 
     private LambdaLogger log;
 
     @Override
-    public Object handleRequest(Object o, Context context) {
+    public Object handleRequest(APIGatewayProxyRequestEvent o, Context context) {
         log = context.getLogger();
         log.log("Handling request (" + o.getClass() + "):\n" + o);
 
