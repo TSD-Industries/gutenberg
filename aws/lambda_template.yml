@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
 
 Resources:
-  HelloWorldFunction:
+  GutenbergLambdaFunction:
     Type: 'AWS::Serverless::Function'
     Properties:
       CodeUri: ../target/lambda.jar
@@ -10,6 +10,7 @@ Resources:
       Runtime: java11
       MemorySize: 256
       Timeout: 30
+      Role: !GetAtt GutenbergLambdaExecutionRole.Arn
       Environment:
         Variables:
           MY_VARIABLE: 'my-value'
@@ -19,3 +20,37 @@ Resources:
           Properties:
             Path: /hello
             Method: GET
+  MyLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: GutenbergLambdaPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: logs:CreateLogGroup
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !GetAtt GutenbergLambdaFunction.Arn
+    MyLambdaEventRule:
+      Type: AWS::Events::Rule
+      Properties:
+        Description: "A rule to trigger the lambda function with a cron expression."
+        ScheduleExpression: "cron(0/2 * * * ? *)" # Trigger every 5 minutes
+        State: "ENABLED"
+        Targets:
+          - Arn: !GetAtt GutenbergLambdaFunction.Arn
+            Id: "GutenbergLambdaTarget"
