@@ -40,12 +40,20 @@ jobs:
           aws-region: us-east-1
 
       - name: Deploy to AWS Lambda
-        run: |
-          aws cloudformation package \
-            --template-file aws/lambda_template.yml \
-            --s3-bucket gutenberg-poc \
-            --output-template-file packaged.yaml
-          aws cloudformation deploy \
-            --template-file packaged.yaml \
-            --stack-name gutenberg-poc-stack \
-            --capabilities CAPABILITY_IAM
+        id: aws-lambda-deploy
+        uses: aws-actions/aws-cloudformation-github-deploy@master
+        with:
+          name: gutenberg-poc-stack
+          template: aws/lambda_template.yml
+          no-fail-on-empty-changeset: "1"
+
+#      - name: Deploy to AWS Lambda
+#        run: |
+#          aws cloudformation package \
+#            --template-file aws/lambda_template.yml \
+#            --s3-bucket gutenberg-poc \
+#            --output-template-file packaged.yaml
+#          aws cloudformation deploy \
+#            --template-file packaged.yaml \
+#            --stack-name gutenberg-poc-stack \
+#            --capabilities CAPABILITY_IAM
