@@ -8,6 +8,8 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
 
     @Override
     public Object handleRequest(Object o, Context context) {
+        System.err.println("Handling request: " + o);
+
         if (o instanceof APIGatewayProxyRequestEvent) {
             System.err.println("API event:\n" + o);
             return "SUCCESS";
