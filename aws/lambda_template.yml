@@ -20,7 +20,7 @@ Resources:
           Properties:
             Path: /hello
             Method: GET
-  MyLambdaExecutionRole:
+  GutenbergLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -45,7 +45,7 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: !GetAtt GutenbergLambdaFunction.Arn
-    MyLambdaEventRule:
+    GutenbergLambdaEventRule:
       Type: AWS::Events::Rule
       Properties:
         Description: "A rule to trigger the lambda function with a cron expression."
