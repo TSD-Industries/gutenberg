@@ -44,7 +44,7 @@ Resources:
                 Action:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                Resource: arn:aws:logs:*:*:/aws/lambda/GutenbergLambdaFunction
+                Resource: arn:aws:logs:us-east-1:805215575150:log-group:*
   GutenbergLambdaEventRule:
     Type: AWS::Events::Rule
     Properties:
