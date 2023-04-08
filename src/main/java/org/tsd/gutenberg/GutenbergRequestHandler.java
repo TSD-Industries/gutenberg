@@ -56,9 +56,9 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
                             true));
 
             final var newPost = PostBuilder.aPost()
-                    .withTitle(TitleBuilder.aTitle().withRaw("YOOOOO " + System.currentTimeMillis()).build())
-                    .withExcerpt(ExcerptBuilder.anExcerpt().withRaw("DAAAAAMN").build())
-                    .withContent(ContentBuilder.aContent().withRaw("Some content").build())
+                    .withTitle(TitleBuilder.aTitle().withRendered("YOOOOO " + System.currentTimeMillis()).build())
+                    .withExcerpt(ExcerptBuilder.anExcerpt().withRendered("DAAAAAMN").build())
+                    .withContent(ContentBuilder.aContent().withRendered("Some content").build())
                     .build();
 
             try {
