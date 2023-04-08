@@ -51,7 +51,7 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
 
         log.log("Handling request (" + o.getClass() + "):\n" + o);
 
-        final var authInfo = restAuthInfo(context);
+        final var authInfo = restAuthInfo();
 
         log.log("Auth info: " + authInfo);
 
@@ -66,11 +66,10 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
         return null;
     }
 
-    private static RestAuthInfo restAuthInfo(Context context) {
-        final var env = context.getClientContext().getEnvironment();
+    private static RestAuthInfo restAuthInfo() {
         return new RestAuthInfo(
-                env.get("WP_REST_USER"),
-                env.get("WP_REST_PASSWORD"));
+                System.getenv("WP_REST_USER"),
+                System.getenv("WP_REST_PASSWORD"));
     }
 
     private static boolean isScheduledEvent(JsonNode jsonNode) {
