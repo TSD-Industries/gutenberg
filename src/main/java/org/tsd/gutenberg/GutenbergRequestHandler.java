@@ -54,15 +54,18 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
 
             final var openAiService = new OpenAiService(openAiApiKey());
 
+            final var prompt = "Pretend you are a stereotypical gym bro. Write a review of the book \"Brothers Karamazov\" that relies heavily on your experience.";
+            final var maxToken = MAX_TOKENS - prompt.length() - 1;
+
             /*
             https://github.com/TheoKanning/openai-java
              */
             final var completionRequest = CompletionRequest
                     .builder()
-                    .prompt("Pretend you are a stereotypical gym bro. Write a review of the book \"Brothers Karamazov\" that relies heavily on your experience.")
+                    .prompt(prompt)
                     .model("text-davinci-003")
                     .echo(false)
-                    .maxTokens(MAX_TOKENS)
+                    .maxTokens(maxToken)
                     .build();
 
             final var postContent = new AtomicReference<String>();
