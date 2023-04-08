@@ -1,40 +1,28 @@
 package org.tsd.gutenberg;
 
+import com.afrozaar.wordpress.wpapi.v2.config.ClientConfig;
+import com.afrozaar.wordpress.wpapi.v2.config.ClientFactory;
+import com.afrozaar.wordpress.wpapi.v2.model.PostStatus;
+import com.afrozaar.wordpress.wpapi.v2.model.builder.ContentBuilder;
+import com.afrozaar.wordpress.wpapi.v2.model.builder.ExcerptBuilder;
+import com.afrozaar.wordpress.wpapi.v2.model.builder.PostBuilder;
+import com.afrozaar.wordpress.wpapi.v2.model.builder.TitleBuilder;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
-
-import java.util.StringJoiner;
+import lombok.Builder;
+import lombok.Data;
 
 public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
-    static class RestAuthInfo {
+    @Data
+    @Builder
+    static class WpInfo {
         private final String username;
         private final String password;
-
-        public RestAuthInfo(String username, String password) {
-            this.username = username;
-            this.password = password;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        @Override
-        public String toString() {
-            return new StringJoiner(", ", RestAuthInfo.class.getSimpleName() + "[", "]")
-                    .add("username='" + username + "'")
-                    .add("password='" + password + "'")
-                    .toString();
-        }
+        private final String baseUrl;
     }
 
     private static final String SOURCE_FIELD = "source";
@@ -46,14 +34,11 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
 
     @Override
     public Object handleRequest(Object o, Context context) {
-        setObjectMapper();
         setLogger(context);
-
         log.log("Handling request (" + o.getClass() + "):\n" + o);
 
-        final var authInfo = restAuthInfo();
-
-        log.log("Auth info: " + authInfo);
+        final var wpInfo = wpInfo();
+        log.log("WP info: " + wpInfo);
 
         final var jsonNode = objectMapper.convertValue(o, JsonNode.class);
 
@@ -61,25 +46,44 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
 
         if (isScheduledEvent(jsonNode)) {
             log.log("Handling scheduled event:\n" + jsonNode);
+
+            final var wpClient = ClientFactory
+                    .fromConfig(ClientConfig.of(
+                            wpInfo.getBaseUrl(),
+                            wpInfo.getUsername(),
+                            wpInfo.getPassword(),
+                            true,
+                            true));
+
+            final var newPost = PostBuilder.aPost()
+                    .withTitle(TitleBuilder.aTitle().withRaw("YOOOOO " + System.currentTimeMillis()).build())
+                    .withExcerpt(ExcerptBuilder.anExcerpt().withRaw("DAAAAAMN").build())
+                    .withContent(ContentBuilder.aContent().withRaw("Some content").build())
+                    .build();
+
+            try {
+                wpClient.createPost(newPost, PostStatus.publish);
+            } catch (Exception e) {
+                log.log("ERROR publishing post: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
 
         return null;
     }
 
-    private static RestAuthInfo restAuthInfo() {
-        return new RestAuthInfo(
-                System.getenv("WP_REST_USER"),
-                System.getenv("WP_REST_PASSWORD"));
+    private static WpInfo wpInfo() {
+        return WpInfo.builder()
+                .username(System.getenv("WP_REST_USER"))
+                .password(System.getenv("WP_REST_PASSWORD"))
+                .baseUrl(System.getenv("WP_URL"))
+                .build();
     }
 
     private static boolean isScheduledEvent(JsonNode jsonNode) {
         return jsonNode.has(SOURCE_FIELD)
                 && jsonNode.get(SOURCE_FIELD).getNodeType().equals(JsonNodeType.STRING)
                 && SOURCE_EVENTS.equalsIgnoreCase(jsonNode.get(SOURCE_FIELD).asText());
-    }
-
-    private void setObjectMapper() {
-        objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
 
     private void setLogger(Context context) {

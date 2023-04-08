@@ -12,9 +12,16 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <jackson.version>2.14.2</jackson.version>
+        <wp.api.lib.version>4.8.1</wp.api.lib.version>
+        <lombok.version>1.18.26</lombok.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
@@ -34,6 +41,11 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.afrozaar.wordpress</groupId>
+            <artifactId>wp-api-v2-client-java</artifactId>
+            <version>${wp.api.lib.version}</version>
         </dependency>
     </dependencies>
 
