@@ -59,7 +59,7 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
             final var completionRequest = CompletionRequest
                     .builder()
                     .prompt("Pretend you are a stereotypical gym bro. Write a review of the book \"Brothers Karamazov\" that relies heavily on your experience.")
-                    .model("gpt-4")
+                    .model("text-davinci-003")
                     .echo(true)
                     .build();
 
