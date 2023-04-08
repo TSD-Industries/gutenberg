@@ -14,6 +14,7 @@
         <jackson.version>2.14.2</jackson.version>
         <wp.api.lib.version>4.8.1</wp.api.lib.version>
         <lombok.version>1.18.26</lombok.version>
+        <openai.lib.version>0.12.0</openai.lib.version>
     </properties>
 
     <dependencies>
@@ -46,6 +47,11 @@
             <groupId>com.afrozaar.wordpress</groupId>
             <artifactId>wp-api-v2-client-java</artifactId>
             <version>${wp.api.lib.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.theokanning.openai-gpt3-java</groupId>
+            <artifactId>service</artifactId>
+            <version>${openai.lib.version}</version>
         </dependency>
     </dependencies>
 

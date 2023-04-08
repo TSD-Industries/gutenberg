@@ -8,6 +8,8 @@ Parameters:
     Type: String
   WpUrl:
     Type: String
+  OpenAiApiKey:
+    Type: String
 
 Resources:
   GutenbergLambdaFunction:
@@ -24,6 +26,7 @@ Resources:
           WP_URL: !Ref WpUrl
           WP_REST_PASSWORD: !Ref WpRestPassword
           WP_REST_USER: !Ref WpRestUser
+          OPEN_AI_API_KEY: !Ref OpenAiApiKey
       Events:
         HelloWorldApi:
           Type: Api

@@ -13,8 +13,12 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.theokanning.openai.completion.CompletionRequest;
+import com.theokanning.openai.service.OpenAiService;
 import lombok.Builder;
 import lombok.Data;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
     @Data
@@ -47,29 +51,63 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
         if (isScheduledEvent(jsonNode)) {
             log.log("Handling scheduled event:\n" + jsonNode);
 
-            final var wpClient = ClientFactory
-                    .fromConfig(ClientConfig.of(
-                            wpInfo.getBaseUrl(),
-                            wpInfo.getUsername(),
-                            wpInfo.getPassword(),
-                            true,
-                            true));
+            final var openAiService = new OpenAiService(openAiApiKey());
 
-            final var newPost = PostBuilder.aPost()
-                    .withTitle(TitleBuilder.aTitle().withRendered("YOOOOO " + System.currentTimeMillis()).build())
-                    .withExcerpt(ExcerptBuilder.anExcerpt().withRendered("DAAAAAMN").build())
-                    .withContent(ContentBuilder.aContent().withRendered("Some content").build())
+            /*
+            https://github.com/TheoKanning/openai-java
+             */
+            final var completionRequest = CompletionRequest
+                    .builder()
+                    .prompt("Pretend you are a stereotypical gym bro. Write a review of the book \"Brothers Karamazov\" that relies heavily on your experience.")
+                    .model("gpt-4")
+                    .echo(true)
                     .build();
 
-            try {
-                wpClient.createPost(newPost, PostStatus.publish);
-            } catch (Exception e) {
-                log.log("ERROR publishing post: " + e.getMessage());
-                e.printStackTrace();
+            final var postContent = new AtomicReference<String>();
+
+            openAiService.createCompletion(completionRequest)
+                    .getChoices().forEach(completionChoice -> {
+                        log.log("Completion result " + completionChoice.getIndex() + ":\n" + completionChoice.getText());
+                        if (postContent.get() == null) {
+                            postContent.set(completionChoice.getText());
+                        }
+                    });
+
+            if (postContent.get() != null) {
+                final var wpClient = ClientFactory
+                        .fromConfig(ClientConfig.of(
+                                wpInfo.getBaseUrl(),
+                                wpInfo.getUsername(),
+                                wpInfo.getPassword(),
+                                true,
+                                true));
+
+                final var newPost = PostBuilder.aPost()
+                        .withTitle(TitleBuilder.aTitle().withRendered("A Review").build())
+                        .withExcerpt(ExcerptBuilder.anExcerpt().withRendered("Yes.").build())
+                        .withContent(ContentBuilder.aContent().withRendered(postContent.get()).build())
+                        .build();
+
+                try {
+                    wpClient.createPost(newPost, PostStatus.publish);
+                } catch (Exception e) {
+                    log.log("ERROR publishing post: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
         }
 
         return null;
+    }
+
+    private static String openAiApiKey() {
+        final var apiKey = System.getenv("OPEN_AI_API_KEY");
+
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new RuntimeException("Could not find OpenAI API KEY in environment.");
+        }
+
+        return apiKey;
     }
 
     private static WpInfo wpInfo() {

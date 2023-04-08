@@ -58,4 +58,5 @@ jobs:
           parameter-overrides: >-
             WpUrl=https://www.heavyreadingclub.com,
             WpRestUser=gutenberg,
-            WpRestPassword=${{ secrets.WP_REST_PASSWORD }}
+            WpRestPassword=${{ secrets.WP_REST_PASSWORD }},
+            OpenAiApiKey=${{ secrets.OPEN_AI_API_KEY }}
