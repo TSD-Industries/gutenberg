@@ -1,6 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
 
+Parameters:
+  WpRestUser:
+    Type: String
+  WpRestPassword:
+    Type: String
+  WpUrl:
+    Type: String
+
 Resources:
   GutenbergLambdaFunction:
     Type: 'AWS::Serverless::Function'
@@ -13,7 +21,9 @@ Resources:
       Role: !GetAtt GutenbergLambdaExecutionRole.Arn
       Environment:
         Variables:
-          MY_VARIABLE: 'my-value'
+          WP_URL: !Ref WpUrl
+          WP_REST_PASSWORD: !Ref WpPassword
+          WP_REST_USER: !Ref WpUser
       Events:
         HelloWorldApi:
           Type: Api

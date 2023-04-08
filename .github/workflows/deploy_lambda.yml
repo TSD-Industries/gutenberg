@@ -56,6 +56,6 @@ jobs:
           no-fail-on-empty-changeset: "1"
           capabilities: "CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND"
           parameter-overrides: >-
-            BASE_URL=https://www.heavyreadingclub.com,
-            WP_REST_USER=gutenberg,
-            WP_REST_PASSWORD=${{ secrets.WP_REST_PASSWORD }}
+            WpUrl=https://www.heavyreadingclub.com,
+            WpRestUser=gutenberg,
+            WpRestPassword=${{ secrets.WP_REST_PASSWORD }}
