@@ -46,6 +46,7 @@ jobs:
             --s3-bucket gutenberg-poc \
             --output-template-file packaged.yaml
 
+#     See: https://github.com/aws-actions/aws-cloudformation-github-deploy/blob/master/action.yml
       - name: Deploy to AWS Lambda
         id: aws-lambda-deploy
         uses: aws-actions/aws-cloudformation-github-deploy@master
@@ -54,14 +55,7 @@ jobs:
           template: packaged.yaml
           no-fail-on-empty-changeset: "1"
           capabilities: "CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND"
-
-#      - name: Deploy to AWS Lambda
-#        run: |
-#          aws cloudformation package \
-#            --template-file aws/lambda_template.yml \
-#            --s3-bucket gutenberg-poc \
-#            --output-template-file packaged.yaml
-#          aws cloudformation deploy \
-#            --template-file packaged.yaml \
-#            --stack-name gutenberg-poc-stack \
-#            --capabilities CAPABILITY_IAM
+          parameter-overrides: >-
+            BASE_URL=https://www.heavyreadingclub.com,
+            WP_REST_USER=gutenberg,
+            WP_REST_PASSWORD=${{ secrets.WP_REST_PASSWORD }}
