@@ -29,6 +29,7 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
         private final String baseUrl;
     }
 
+    private static final int MAX_TOKENS = 4096;
     private static final String SOURCE_FIELD = "source";
     private static final String SOURCE_EVENTS = "aws.events";
 
@@ -60,14 +61,19 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
                     .builder()
                     .prompt("Pretend you are a stereotypical gym bro. Write a review of the book \"Brothers Karamazov\" that relies heavily on your experience.")
                     .model("text-davinci-003")
-                    .echo(true)
+                    .echo(false)
+                    .maxTokens(MAX_TOKENS)
                     .build();
 
             final var postContent = new AtomicReference<String>();
 
             openAiService.createCompletion(completionRequest)
                     .getChoices().forEach(completionChoice -> {
-                        log.log("Completion result " + completionChoice.getIndex() + ":\n" + completionChoice.getText());
+                        final var logString = String.format("Completion result %s (%s):\n%s",
+                                completionChoice.getIndex(),
+                                completionChoice.getFinish_reason(),
+                                completionChoice.getText());
+                        log.log(logString);
                         if (postContent.get() == null) {
                             postContent.set(completionChoice.getText());
                         }
