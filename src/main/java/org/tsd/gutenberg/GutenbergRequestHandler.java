@@ -37,8 +37,11 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
         if (isScheduledEvent(jsonNode)) {
             try {
                 log.log("Handling scheduled event:\n" + jsonNode);
-                final var prompt = promptGenerator.generate(buildPromptOptions());
-                final var blogPostMaybe = completionService.createBlogPost(prompt);
+                final var promptOptions = buildPromptOptions();
+                final var prompt = promptGenerator.generate(promptOptions);
+                final var blogPostMaybe = completionService.createBlogPost(
+                        promptOptions.getAuthorId().orElse(null), prompt);
+                
                 if (blogPostMaybe.isPresent()) {
                     log.log("Creating blog post:\n" + blogPostMaybe.get());
                     wordpressService.post(wpInfo, blogPostMaybe.get());

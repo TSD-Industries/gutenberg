@@ -19,7 +19,7 @@ public class CompletionService {
         this.log = log;
     }
 
-    public Optional<BlogPost> createBlogPost(String prompt) {
+    public Optional<BlogPost> createBlogPost(Long authorId, String prompt) {
         final var openAiService = new OpenAiService(openAiApiKey(), Duration.ofMinutes(1));
 
         final var maxToken = MAX_TOKENS - prompt.length() - 1;
@@ -45,14 +45,14 @@ public class CompletionService {
                             completionChoice.getText());
                     log.log(logString);
                     if (blogPostRef.get() == null) {
-                        blogPostRef.set(parsePostFromResponse(completionChoice.getText()));
+                        blogPostRef.set(parsePostFromResponse(authorId, completionChoice.getText()));
                     }
                 });
 
         return Optional.ofNullable(blogPostRef.get());
     }
 
-    private static BlogPost parsePostFromResponse(String rawResponse) {
+    private static BlogPost parsePostFromResponse(Long authorId, String rawResponse) {
         final var pattern = Pattern.compile(".*?Title:(.*?)Excerpt:(.*?)Body:(.*)", Pattern.DOTALL);
         final var matcher = pattern.matcher(rawResponse);
 
@@ -64,6 +64,7 @@ public class CompletionService {
                     .title(title)
                     .excerpt(excerpt)
                     .body(review)
+                    .author(authorId)
                     .build();
         }
 

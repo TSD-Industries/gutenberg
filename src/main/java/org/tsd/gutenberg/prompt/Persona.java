@@ -7,7 +7,7 @@ import java.util.Random;
 
 @Data
 public class Persona {
-    private final int wordPressUserId;
+    private final long wordPressUserId;
     private final String name;
 
     static Persona of(int wpUserId, String name) {

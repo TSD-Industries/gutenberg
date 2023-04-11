@@ -19,7 +19,9 @@ public class CompletionServiceTest {
                 .persona(Persona.random())
                 .build();
 
-        final var post = completionService.createBlogPost(promptGenerator.generate(promptOptions));
+        final var post = completionService.createBlogPost(
+                promptOptions.getAuthorId().orElse(null),
+                promptGenerator.generate(promptOptions));
         int i=0;
     }
 }
