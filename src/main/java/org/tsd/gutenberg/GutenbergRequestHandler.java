@@ -1,45 +1,28 @@
 package org.tsd.gutenberg;
 
-import com.afrozaar.wordpress.wpapi.v2.config.ClientConfig;
-import com.afrozaar.wordpress.wpapi.v2.config.ClientFactory;
-import com.afrozaar.wordpress.wpapi.v2.model.PostStatus;
-import com.afrozaar.wordpress.wpapi.v2.model.builder.ContentBuilder;
-import com.afrozaar.wordpress.wpapi.v2.model.builder.ExcerptBuilder;
-import com.afrozaar.wordpress.wpapi.v2.model.builder.PostBuilder;
-import com.afrozaar.wordpress.wpapi.v2.model.builder.TitleBuilder;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.theokanning.openai.completion.CompletionRequest;
-import com.theokanning.openai.service.OpenAiService;
-import lombok.Builder;
-import lombok.Data;
-
-import java.util.concurrent.atomic.AtomicReference;
+import org.tsd.gutenberg.prompt.Persona;
+import org.tsd.gutenberg.prompt.PromptOptions;
 
 public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
-    @Data
-    @Builder
-    static class WpInfo {
-        private final String username;
-        private final String password;
-        private final String baseUrl;
-    }
 
-    private static final int MAX_TOKENS = 4096;
     private static final String SOURCE_FIELD = "source";
     private static final String SOURCE_EVENTS = "aws.events";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
+    private CompletionService completionService;
+    private WordpressService wordpressService;
+    private PromptGenerator promptGenerator = new PromptGenerator();
     private LambdaLogger log;
 
     @Override
     public Object handleRequest(Object o, Context context) {
-        setLogger(context);
+        initialize(context);
         log.log("Handling request (" + o.getClass() + "):\n" + o);
 
         final var wpInfo = wpInfo();
@@ -50,73 +33,23 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
         log.log("jsonNode:\n" + jsonNode.toString());
 
         if (isScheduledEvent(jsonNode)) {
-            log.log("Handling scheduled event:\n" + jsonNode);
-
-            final var openAiService = new OpenAiService(openAiApiKey());
-
-            final var prompt = "Pretend you are a stereotypical gym bro. Write a review of the book \"Brothers Karamazov\" that relies heavily on your experience.";
-            final var maxToken = MAX_TOKENS - prompt.length() - 1;
-
-            /*
-            https://github.com/TheoKanning/openai-java
-             */
-            final var completionRequest = CompletionRequest
-                    .builder()
-                    .prompt(prompt)
-                    .model("text-davinci-003")
-                    .echo(false)
-                    .maxTokens(maxToken)
-                    .build();
-
-            final var postContent = new AtomicReference<String>();
-
-            openAiService.createCompletion(completionRequest)
-                    .getChoices().forEach(completionChoice -> {
-                        final var logString = String.format("Completion result %s (%s):\n%s",
-                                completionChoice.getIndex(),
-                                completionChoice.getFinish_reason(),
-                                completionChoice.getText());
-                        log.log(logString);
-                        if (postContent.get() == null) {
-                            postContent.set(completionChoice.getText());
-                        }
-                    });
-
-            if (postContent.get() != null) {
-                final var wpClient = ClientFactory
-                        .fromConfig(ClientConfig.of(
-                                wpInfo.getBaseUrl(),
-                                wpInfo.getUsername(),
-                                wpInfo.getPassword(),
-                                true,
-                                true));
-
-                final var newPost = PostBuilder.aPost()
-                        .withTitle(TitleBuilder.aTitle().withRendered("A Review").build())
-                        .withExcerpt(ExcerptBuilder.anExcerpt().withRendered("Yes.").build())
-                        .withContent(ContentBuilder.aContent().withRendered(postContent.get()).build())
-                        .build();
-
-                try {
-                    wpClient.createPost(newPost, PostStatus.publish);
-                } catch (Exception e) {
-                    log.log("ERROR publishing post: " + e.getMessage());
-                    e.printStackTrace();
+            try {
+                log.log("Handling scheduled event:\n" + jsonNode);
+                final var prompt = promptGenerator.generate(PromptOptions
+                        .builder()
+                        .persona(Persona.random().orElse(null))
+                        .build());
+                final var blogPostMaybe = completionService.createBlogPost(prompt);
+                if (blogPostMaybe.isPresent()) {
+                    log.log("Creating blog post:\n" + blogPostMaybe.get());
+                    wordpressService.post(wpInfo, blogPostMaybe.get());
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
         return null;
-    }
-
-    private static String openAiApiKey() {
-        final var apiKey = System.getenv("OPEN_AI_API_KEY");
-
-        if (apiKey == null || apiKey.isBlank()) {
-            throw new RuntimeException("Could not find OpenAI API KEY in environment.");
-        }
-
-        return apiKey;
     }
 
     private static WpInfo wpInfo() {
@@ -133,7 +66,9 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
                 && SOURCE_EVENTS.equalsIgnoreCase(jsonNode.get(SOURCE_FIELD).asText());
     }
 
-    private void setLogger(Context context) {
-        log = context.getLogger();
+    private void initialize(Context context) {
+        this.log = context.getLogger();
+        this.completionService = new CompletionService(log);
+        this.wordpressService = new WordpressService(log);
     }
 }
