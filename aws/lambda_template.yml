@@ -62,7 +62,8 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "A rule to trigger the lambda function with a cron expression."
-      ScheduleExpression: "cron(0 0/6 * * ? *)" # Trigger every 6 hours
+#      ScheduleExpression: "cron(0 0/6 * * ? *)" # Trigger every 6 hours
+      ScheduleExpression: "cron(0/3 * * * ? *)" # Trigger every 6 hours
       State: "ENABLED"
       Targets:
         - Arn: !GetAtt GutenbergLambdaFunction.Arn

@@ -10,4 +10,5 @@ public class BlogPostOptions {
     private final PostCategory postCategory;
     private final String settingsMessage;
     private final String instructionMessage;
+    private final String imageGenerationPrompt;
 }

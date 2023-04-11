@@ -14,9 +14,9 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
     private static final String SOURCE_EVENTS = "aws.events";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private CompletionService completionService;
+    private GptService gptService;
     private WordpressService wordpressService;
-    private BlogPostGenerator blogPostGenerator = new BlogPostGenerator();
+    private final BlogPostGenerator blogPostGenerator = new BlogPostGenerator();
     private LambdaLogger log;
 
     @Override
@@ -35,13 +35,15 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
             try {
                 log.log("Handling scheduled event:\n" + jsonNode);
                 final var options = generateBlogPost();
-                final var blogPostMaybe = completionService.createBlogPost(options);
+                final var blogPostMaybe = gptService.createBlogPost(options);
 
                 if (blogPostMaybe.isPresent()) {
                     log.log("Creating blog post:\n" + blogPostMaybe.get());
                     wordpressService.post(wpInfo, blogPostMaybe.get());
+                    log.log("Successfully created blog post.");
                 }
             } catch (Exception e) {
+                log.log("Error creating blog post: " + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -69,7 +71,7 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
 
     private void initialize(Context context) {
         this.log = context.getLogger();
-        this.completionService = new CompletionService(log);
+        this.gptService = new GptService(log);
         this.wordpressService = new WordpressService(log);
     }
 }

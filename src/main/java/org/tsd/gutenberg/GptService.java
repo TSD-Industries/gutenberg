@@ -3,42 +3,33 @@ package org.tsd.gutenberg;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
-import com.theokanning.openai.service.OpenAiService;
+import com.theokanning.openai.image.CreateImageRequest;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tsd.gutenberg.prompt.BlogPostOptions;
 import org.tsd.gutenberg.prompt.PostCategory;
 
 import java.io.IOException;
-import java.time.Duration;
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-public class CompletionService {
+public class GptService extends OpenAIService {
     private static final int MAX_TOKENS = 4096;
 
-    private final LambdaLogger log;
-    private final BlogPostGenerator promptGenerator = new BlogPostGenerator();
-
-    public CompletionService(LambdaLogger log) {
-        this.log = log;
+    public GptService(LambdaLogger log) {
+        super(log);
     }
 
     public Optional<BlogPost> createBlogPost(BlogPostOptions blogPostOptions) throws IOException {
-        final var openAiService = new OpenAiService(openAiApiKey(), Duration.ofMinutes(1));
+        log.log("Creating blog post with options: " + blogPostOptions);
 
         /*
         https://github.com/TheoKanning/openai-java
          */
-//        final var completionRequest = CompletionRequest
-//                .builder()
-//                .prompt(promptText)
-//                .model("text-davinci-003")
-//                .echo(false)
-//                .maxTokens(maxToken)
-//                .build();
-
         final var settingsMessage = new ChatMessage("system", blogPostOptions.getSettingsMessage());
         final var instructionMessage = new ChatMessage("user", blogPostOptions.getInstructionMessage());
 
@@ -56,25 +47,39 @@ public class CompletionService {
 
         final var blogPostRef = new AtomicReference<BlogPost>();
 
-        openAiService.createChatCompletion(completionRequest)
+        service.createChatCompletion(completionRequest)
                 .getChoices().forEach(completionChoice -> {
                     final var logString = String.format("Completion result %s:\n%s",
                             completionChoice.getIndex(),
                             completionChoice.getMessage());
                     log.log(logString);
+
                     if (blogPostRef.get() == null) {
+                        final var postMediaMaybe
+                                = generateImage(blogPostOptions.getImageGenerationPrompt());
+
+                        if (postMediaMaybe.isPresent()) {
+                            log.log("Downloaded generated image of size "
+                                    + FileUtils.byteCountToDisplaySize(postMediaMaybe.get().length));
+                        } else {
+                            log.log("Failed to download image.");
+                        }
+
                         blogPostRef.set(parsePostFromResponse(
                                 blogPostOptions.getAuthorId(),
                                 blogPostOptions.getPostCategory(),
+                                postMediaMaybe.orElse(null),
                                 completionChoice.getMessage().getContent()));
                     }
                 });
 
+        log.log("Built blog post info: " + blogPostRef.get());
         return Optional.ofNullable(blogPostRef.get());
     }
 
     private static BlogPost parsePostFromResponse(Long authorId,
                                                   PostCategory postCategory,
+                                                  byte[] mediaBytes,
                                                   String rawResponse) {
         final var pattern = Pattern.compile(".*?Title:(.*?)Excerpt:(.*?)Body:(.*)", Pattern.DOTALL);
         final var matcher = pattern.matcher(rawResponse);
@@ -94,19 +99,36 @@ public class CompletionService {
                     .body(review)
                     .author(authorId)
                     .category(postCategory)
+                    .mediaBytes(mediaBytes)
                     .build();
         }
 
         return null;
     }
 
-    private static String openAiApiKey() {
-        final var apiKey = System.getenv("OPEN_AI_API_KEY");
+    public Optional<byte[]> generateImage(String prompt) {
+        log.log("Generating image with prompt: " + prompt);
 
-        if (apiKey == null || apiKey.isBlank()) {
-            throw new RuntimeException("Could not find OpenAI API KEY in environment.");
+        final var request = CreateImageRequest.builder()
+                .prompt(prompt)
+                .size("1024x1024")
+                .n(1)
+                .build();
+
+        final var imageResult = service.createImage(request);
+
+        if (imageResult.getData() != null && !imageResult.getData().isEmpty()) {
+            log.log("Image generation successful, downloading...");
+            try {
+                return Optional.of(
+                        IOUtils.toByteArray(
+                                URI.create(imageResult.getData().get(0).getUrl()).toURL().openConnection()));
+            } catch (Exception e) {
+                log.log("Error generating image: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
 
-        return apiKey;
+        return Optional.empty();
     }
 }

@@ -57,6 +57,7 @@ public class BookReviewPrompt extends Prompt {
                 .postCategory(PostCategory.BOOK_REVIEW)
                 .settingsMessage(generateSettingsText(persona))
                 .instructionMessage(generateInstructionText(book))
+                .imageGenerationPrompt(ImagePrompts.randomImagePrompt())
                 .build();
     }
 

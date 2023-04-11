@@ -12,4 +12,5 @@ public class BlogPost {
     private final String excerpt;
     private final String body;
     private final PostCategory category;
+    private final byte[] mediaBytes;
 }
