@@ -3,6 +3,7 @@ package org.tsd.gutenberg.prompt;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -77,8 +78,9 @@ public class BookReviewPrompt extends Prompt {
         } else {
             return String.format(
                     "Write a blog post. Pretend you are %s. "
-                    + "The blog post must be written in your personal style in an exaggerated fashion.",
-                    persona.getName());
+                    + "The blog post must be written in a style that embodies these descriptions: %s.",
+                    persona.getName(),
+                    StringUtils.join(persona.getEmphases(), ", "));
         }
     }
 }
