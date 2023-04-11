@@ -19,7 +19,7 @@ Resources:
       Handler: org.tsd.gutenberg.GutenbergRequestHandler
       Runtime: java11
       MemorySize: 256
-      Timeout: 30
+      Timeout: 90
       Role: !GetAtt GutenbergLambdaExecutionRole.Arn
       Environment:
         Variables:
