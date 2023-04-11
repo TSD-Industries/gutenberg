@@ -75,7 +75,7 @@ public class CompletionService {
                     .excerpt(excerpt)
                     .body(review)
                     .author(authorId)
-                    .category(postCategory.getCategoryName())
+                    .category(postCategory)
                     .build();
         }
 

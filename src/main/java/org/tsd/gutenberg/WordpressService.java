@@ -9,6 +9,8 @@ import com.afrozaar.wordpress.wpapi.v2.model.builder.PostBuilder;
 import com.afrozaar.wordpress.wpapi.v2.model.builder.TitleBuilder;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 
+import java.util.List;
+
 public class WordpressService {
     private final LambdaLogger log;
 
@@ -30,6 +32,7 @@ public class WordpressService {
                 .withExcerpt(ExcerptBuilder.anExcerpt().withRendered(blogPost.getExcerpt()).build())
                 .withContent(ContentBuilder.aContent().withRendered(blogPost.getBody()).build())
                 .withAuthor(blogPost.getAuthor())
+                .withCategories(List.of(blogPost.getCategory().getCategoryId()))
                 .build();
 
         try {

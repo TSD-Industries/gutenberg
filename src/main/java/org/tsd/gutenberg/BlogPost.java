@@ -2,6 +2,7 @@ package org.tsd.gutenberg;
 
 import lombok.Builder;
 import lombok.Data;
+import org.tsd.gutenberg.prompt.PostCategory;
 
 @Data
 @Builder
@@ -10,5 +11,5 @@ public class BlogPost {
     private final String title;
     private final String excerpt;
     private final String body;
-    private final String category;
+    private final PostCategory category;
 }
