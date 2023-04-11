@@ -9,6 +9,7 @@ import org.tsd.gutenberg.prompt.BlogPostOptions;
 import org.tsd.gutenberg.prompt.PostCategory;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -71,7 +72,7 @@ public class GptService extends OpenAIService {
 
     private static BlogPost parsePostFromResponse(Long authorId,
                                                   PostCategory postCategory,
-                                                  String imageUrl,
+                                                  byte[] imageBytes,
                                                   String rawResponse) {
         final var pattern = Pattern.compile(".*?Title:(.*?)Excerpt:(.*?)Body:(.*)", Pattern.DOTALL);
         final var matcher = pattern.matcher(rawResponse);
@@ -84,26 +85,26 @@ public class GptService extends OpenAIService {
             review = StringUtils.replaceIgnoreCase(review, "conclusion:", "");
             review = review.trim();
 
-
             return BlogPost.builder()
                     .title(title)
                     .excerpt(excerpt)
                     .body(review)
                     .author(authorId)
                     .category(postCategory)
-                    .imageUrl(imageUrl)
+                    .imageBytes(imageBytes)
                     .build();
         }
 
         return null;
     }
 
-    public Optional<String> generateImage(String prompt) {
+    public Optional<byte[]> generateImage(String prompt) {
         log.log("Generating image with prompt: " + prompt);
 
         final var request = CreateImageRequest.builder()
                 .prompt(prompt)
                 .size("1024x1024")
+                .responseFormat("b64_json")
                 .n(1)
                 .build();
 
@@ -112,7 +113,8 @@ public class GptService extends OpenAIService {
         if (imageResult.getData() != null && !imageResult.getData().isEmpty()) {
             log.log("Image generation successful, downloading...");
             try {
-                return Optional.of(imageResult.getData().get(0).getUrl());
+                byte[] imageBytes = Base64.getDecoder().decode(imageResult.getData().get(0).getB64Json());
+                return Optional.of(imageBytes);
             } catch (Exception e) {
                 log.log("Error generating image: " + e.getMessage());
                 e.printStackTrace();
