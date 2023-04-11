@@ -25,5 +25,5 @@ public class BlogPost {
     private final PostCategory category;
 
     @ToString.Exclude
-    private final byte[] mediaBytes;
+    private final String imageUrl;
 }

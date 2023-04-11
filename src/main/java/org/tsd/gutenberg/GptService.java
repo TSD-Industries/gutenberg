@@ -4,14 +4,11 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.image.CreateImageRequest;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tsd.gutenberg.prompt.BlogPostOptions;
 import org.tsd.gutenberg.prompt.PostCategory;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -58,12 +55,7 @@ public class GptService extends OpenAIService {
                         final var postMediaMaybe
                                 = generateImage(blogPostOptions.getImageGenerationPrompt());
 
-                        if (postMediaMaybe.isPresent()) {
-                            log.log("Downloaded generated image of size "
-                                    + FileUtils.byteCountToDisplaySize(postMediaMaybe.get().length));
-                        } else {
-                            log.log("Failed to download image.");
-                        }
+                        log.log("Generated image URL: " + postMediaMaybe.orElse(null));
 
                         blogPostRef.set(parsePostFromResponse(
                                 blogPostOptions.getAuthorId(),
@@ -79,7 +71,7 @@ public class GptService extends OpenAIService {
 
     private static BlogPost parsePostFromResponse(Long authorId,
                                                   PostCategory postCategory,
-                                                  byte[] mediaBytes,
+                                                  String imageUrl,
                                                   String rawResponse) {
         final var pattern = Pattern.compile(".*?Title:(.*?)Excerpt:(.*?)Body:(.*)", Pattern.DOTALL);
         final var matcher = pattern.matcher(rawResponse);
@@ -99,14 +91,14 @@ public class GptService extends OpenAIService {
                     .body(review)
                     .author(authorId)
                     .category(postCategory)
-                    .mediaBytes(mediaBytes)
+                    .imageUrl(imageUrl)
                     .build();
         }
 
         return null;
     }
 
-    public Optional<byte[]> generateImage(String prompt) {
+    public Optional<String> generateImage(String prompt) {
         log.log("Generating image with prompt: " + prompt);
 
         final var request = CreateImageRequest.builder()
@@ -120,9 +112,7 @@ public class GptService extends OpenAIService {
         if (imageResult.getData() != null && !imageResult.getData().isEmpty()) {
             log.log("Image generation successful, downloading...");
             try {
-                return Optional.of(
-                        IOUtils.toByteArray(
-                                URI.create(imageResult.getData().get(0).getUrl()).toURL().openConnection()));
+                return Optional.of(imageResult.getData().get(0).getUrl());
             } catch (Exception e) {
                 log.log("Error generating image: " + e.getMessage());
                 e.printStackTrace();

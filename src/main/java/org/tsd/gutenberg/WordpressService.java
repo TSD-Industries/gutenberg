@@ -12,7 +12,7 @@ import com.afrozaar.wordpress.wpapi.v2.model.builder.PostBuilder;
 import com.afrozaar.wordpress.wpapi.v2.model.builder.TitleBuilder;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import org.apache.commons.lang3.RandomUtils;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.UrlResource;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,8 +39,8 @@ public class WordpressService {
                         true,
                         true));
 
-        final Long mediaId = blogPost.getMediaBytes() == null
-                ? randomStockImage() : uploadMedia(wpClient, blogPost.getMediaBytes()).orElse(randomStockImage());
+        final Long mediaId = blogPost.getImageUrl() == null
+                ? randomStockImage() : uploadMedia(wpClient, blogPost.getImageUrl()).orElse(randomStockImage());
 
         final var newPost = PostBuilder.aPost()
                 .withTitle(TitleBuilder.aTitle().withRendered(blogPost.getTitle()).build())
@@ -59,7 +59,7 @@ public class WordpressService {
         }
     }
 
-    private Optional<Long> uploadMedia(Wordpress wpClient, byte[] data) {
+    private Optional<Long> uploadMedia(Wordpress wpClient, String url) {
         try {
             final var media = new Media();
             media.setGuid(new Guid());
@@ -67,7 +67,8 @@ public class WordpressService {
             media.setTitle(TitleBuilder.aTitle().withRendered(Long.toString(System.currentTimeMillis())).build());
             media.setCaption("Light weight baby.");
 
-            final var resource = new ByteArrayResource(data);
+//            final var resource = new ByteArrayResource(data);
+            final var resource = new UrlResource(url);
 
             wpClient.createMedia(media, resource);
             return Optional.of(media.getId());
