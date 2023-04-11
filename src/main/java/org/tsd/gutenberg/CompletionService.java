@@ -3,7 +3,10 @@ package org.tsd.gutenberg;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.theokanning.openai.completion.CompletionRequest;
 import com.theokanning.openai.service.OpenAiService;
+import org.tsd.gutenberg.prompt.BlogPostOptions;
+import org.tsd.gutenberg.prompt.PostCategory;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -13,23 +16,25 @@ public class CompletionService {
     private static final int MAX_TOKENS = 4096;
 
     private final LambdaLogger log;
-    private final PromptGenerator promptGenerator = new PromptGenerator();
+    private final BlogPostGenerator promptGenerator = new BlogPostGenerator();
 
     public CompletionService(LambdaLogger log) {
         this.log = log;
     }
 
-    public Optional<BlogPost> createBlogPost(Long authorId, String prompt) {
+    public Optional<BlogPost> createBlogPost(BlogPostOptions blogPostOptions) throws IOException {
+        final var promptText = blogPostOptions.getPromptText();
+
         final var openAiService = new OpenAiService(openAiApiKey(), Duration.ofMinutes(1));
 
-        final var maxToken = MAX_TOKENS - prompt.length() - 1;
+        final var maxToken = MAX_TOKENS - promptText.length() - 1;
 
-            /*
-            https://github.com/TheoKanning/openai-java
-             */
+        /*
+        https://github.com/TheoKanning/openai-java
+         */
         final var completionRequest = CompletionRequest
                 .builder()
-                .prompt(prompt)
+                .prompt(promptText)
                 .model("text-davinci-003")
                 .echo(false)
                 .maxTokens(maxToken)
@@ -45,14 +50,19 @@ public class CompletionService {
                             completionChoice.getText());
                     log.log(logString);
                     if (blogPostRef.get() == null) {
-                        blogPostRef.set(parsePostFromResponse(authorId, completionChoice.getText()));
+                        blogPostRef.set(parsePostFromResponse(
+                                blogPostOptions.getAuthorId(),
+                                blogPostOptions.getPostCategory(),
+                                completionChoice.getText()));
                     }
                 });
 
         return Optional.ofNullable(blogPostRef.get());
     }
 
-    private static BlogPost parsePostFromResponse(Long authorId, String rawResponse) {
+    private static BlogPost parsePostFromResponse(Long authorId,
+                                                  PostCategory postCategory,
+                                                  String rawResponse) {
         final var pattern = Pattern.compile(".*?Title:(.*?)Excerpt:(.*?)Body:(.*)", Pattern.DOTALL);
         final var matcher = pattern.matcher(rawResponse);
 
@@ -65,6 +75,7 @@ public class CompletionService {
                     .excerpt(excerpt)
                     .body(review)
                     .author(authorId)
+                    .category(postCategory.getCategoryName())
                     .build();
         }
 

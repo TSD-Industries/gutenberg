@@ -1,9 +1,9 @@
 package org.tsd.gutenberg.prompt;
 
 import lombok.Data;
+import org.apache.commons.lang3.RandomUtils;
 
 import java.util.List;
-import java.util.Random;
 
 @Data
 public class Persona {
@@ -15,8 +15,7 @@ public class Persona {
     }
 
     public static Persona random() {
-        final var r = new Random();
-        return PERSONAS.get(r.nextInt(PERSONAS.size()));
+        return PERSONAS.get(RandomUtils.nextInt(0, PERSONAS.size()));
     }
 
     private static final List<Persona> PERSONAS = List.of(

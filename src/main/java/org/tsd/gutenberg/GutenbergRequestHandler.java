@@ -6,10 +6,7 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
-import org.tsd.gutenberg.prompt.Persona;
-import org.tsd.gutenberg.prompt.PromptOptions;
-
-import java.util.Random;
+import org.tsd.gutenberg.prompt.BlogPostOptions;
 
 public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
 
@@ -19,7 +16,7 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private CompletionService completionService;
     private WordpressService wordpressService;
-    private PromptGenerator promptGenerator = new PromptGenerator();
+    private BlogPostGenerator blogPostGenerator = new BlogPostGenerator();
     private LambdaLogger log;
 
     @Override
@@ -37,11 +34,9 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
         if (isScheduledEvent(jsonNode)) {
             try {
                 log.log("Handling scheduled event:\n" + jsonNode);
-                final var promptOptions = buildPromptOptions();
-                final var prompt = promptGenerator.generate(promptOptions);
-                final var blogPostMaybe = completionService.createBlogPost(
-                        promptOptions.getAuthorId().orElse(null), prompt);
-                
+                final var options = generateBlogPost();
+                final var blogPostMaybe = completionService.createBlogPost(options);
+
                 if (blogPostMaybe.isPresent()) {
                     log.log("Creating blog post:\n" + blogPostMaybe.get());
                     wordpressService.post(wpInfo, blogPostMaybe.get());
@@ -54,15 +49,8 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
         return null;
     }
 
-    private PromptOptions buildPromptOptions() {
-        final var promptBuilder = PromptOptions.builder();
-        final var random = new Random();
-
-        if (random.nextDouble() > 0.25) {
-            promptBuilder.persona(Persona.random());
-        }
-
-        return promptBuilder.build();
+    private BlogPostOptions generateBlogPost() throws Exception {
+        return blogPostGenerator.generateRandomBlogPost();
     }
 
     private static WpInfo wpInfo() {

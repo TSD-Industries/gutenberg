@@ -1,7 +1,11 @@
 package org.tsd.gutenberg.prompt;
 
-import java.io.IOException;
+public abstract class Prompt {
+    private final PostCategory postCategory;
 
-public interface Prompt {
-    String generate(PromptOptions promptOptions) throws IOException;
+    public Prompt(PostCategory postCategory) {
+        this.postCategory = postCategory;
+    }
+
+    public abstract BlogPostOptions options() throws Exception;
 }
