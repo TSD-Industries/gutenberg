@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import org.tsd.gutenberg.prompt.Persona;
 import org.tsd.gutenberg.prompt.PromptOptions;
 
+import java.util.Random;
+
 public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
 
     private static final String SOURCE_FIELD = "source";
@@ -35,10 +37,7 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
         if (isScheduledEvent(jsonNode)) {
             try {
                 log.log("Handling scheduled event:\n" + jsonNode);
-                final var prompt = promptGenerator.generate(PromptOptions
-                        .builder()
-                        .persona(Persona.random().orElse(null))
-                        .build());
+                final var prompt = promptGenerator.generate(buildPromptOptions());
                 final var blogPostMaybe = completionService.createBlogPost(prompt);
                 if (blogPostMaybe.isPresent()) {
                     log.log("Creating blog post:\n" + blogPostMaybe.get());
@@ -50,6 +49,17 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
         }
 
         return null;
+    }
+
+    private PromptOptions buildPromptOptions() {
+        final var promptBuilder = PromptOptions.builder();
+        final var random = new Random();
+
+        if (random.nextDouble() > 0.25) {
+            promptBuilder.persona(Persona.random());
+        }
+
+        return promptBuilder.build();
     }
 
     private static WpInfo wpInfo() {

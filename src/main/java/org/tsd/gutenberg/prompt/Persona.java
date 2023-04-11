@@ -3,7 +3,6 @@ package org.tsd.gutenberg.prompt;
 import lombok.Data;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 
 @Data
@@ -15,14 +14,9 @@ public class Persona {
         return new Persona(wpUserId, name);
     }
 
-    public static Optional<Persona> random() {
+    public static Persona random() {
         final var r = new Random();
-
-        if (r.nextDouble() > 0.25) {
-            return Optional.of(PERSONAS.get(r.nextInt(PERSONAS.size())));
-        } else {
-            return Optional.empty();
-        }
+        return PERSONAS.get(r.nextInt(PERSONAS.size()));
     }
 
     private static final List<Persona> PERSONAS = List.of(
