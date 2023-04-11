@@ -55,32 +55,35 @@ public class BookReviewPrompt extends Prompt {
         return BlogPostOptions.builder()
                 .authorId(persona == null ? null : persona.getWordPressUserId())
                 .postCategory(PostCategory.BOOK_REVIEW)
-                .promptText(generatePromptText(persona, book))
+                .settingsMessage(generateSettingsText(persona))
+                .instructionMessage(generateInstructionText(book))
                 .build();
     }
 
-    private String generatePromptText(Persona persona, String book) throws IOException {
-        return preamble(persona) + " "
+    private String generateSettingsText(Persona persona) {
+        if (persona == null) {
+            return "Hello.";
+        } else {
+            return String.format(
+                    "Pretend you are %s. %s.",
+                    persona.getName(),
+                    StringUtils.join(persona.getEmphases(), ". "));
+        }
+    }
+
+    private String generateInstructionText(String book) throws IOException {
+        return "Write a blog post. The blog post must be heavily influenced by the qualities I described earlier in an exaggerated, over-the-top way. "
                 + "The first part of the post should be a review of the book " + book + ". "
                 + "The review should begin with a synopsis or plot summary, "
                 + "continue with a description of why the book is important or significant, "
                 + "and conclude with why someone should read it. Find a way to make the book relevant to people who lift weights. "
                 + "Conclude the blog post with an invitation for readers to comment on what they read today and what they did in the gym. "
+                + "You must write only one blog post, not multiple. "
                 + "Your response should be in the following format:\n"
                 + "Title:\n"
                 + "Excerpt:\n"
                 + "Body:\n";
     }
 
-    private String preamble(Persona persona) {
-        if (persona == null) {
-            return "Write a blog post.";
-        } else {
-            return String.format(
-                    "Write a blog post. Pretend you are %s. "
-                    + "The blog post must be written in a style that embodies these descriptions: %s.",
-                    persona.getName(),
-                    StringUtils.join(persona.getEmphases(), ", "));
-        }
-    }
+
 }

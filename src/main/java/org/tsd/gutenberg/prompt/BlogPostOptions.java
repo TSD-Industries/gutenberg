@@ -8,5 +8,6 @@ import lombok.Data;
 public class BlogPostOptions {
     private final Long authorId;
     private final PostCategory postCategory;
-    private final String promptText;
+    private final String settingsMessage;
+    private final String instructionMessage;
 }

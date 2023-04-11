@@ -1,13 +1,16 @@
 package org.tsd.gutenberg;
 
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import com.theokanning.openai.completion.CompletionRequest;
+import com.theokanning.openai.completion.chat.ChatCompletionRequest;
+import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.service.OpenAiService;
+import org.apache.commons.lang3.StringUtils;
 import org.tsd.gutenberg.prompt.BlogPostOptions;
 import org.tsd.gutenberg.prompt.PostCategory;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -23,37 +26,47 @@ public class CompletionService {
     }
 
     public Optional<BlogPost> createBlogPost(BlogPostOptions blogPostOptions) throws IOException {
-        final var promptText = blogPostOptions.getPromptText();
-
         final var openAiService = new OpenAiService(openAiApiKey(), Duration.ofMinutes(1));
-
-        final var maxToken = MAX_TOKENS - promptText.length() - 1;
 
         /*
         https://github.com/TheoKanning/openai-java
          */
-        final var completionRequest = CompletionRequest
+//        final var completionRequest = CompletionRequest
+//                .builder()
+//                .prompt(promptText)
+//                .model("text-davinci-003")
+//                .echo(false)
+//                .maxTokens(maxToken)
+//                .build();
+
+        final var settingsMessage = new ChatMessage("system", blogPostOptions.getSettingsMessage());
+        final var instructionMessage = new ChatMessage("user", blogPostOptions.getInstructionMessage());
+
+        final var maxToken = MAX_TOKENS
+                - blogPostOptions.getSettingsMessage().length()
+                - blogPostOptions.getInstructionMessage().length()
+                - 1 ;
+
+        final var completionRequest = ChatCompletionRequest
                 .builder()
-                .prompt(promptText)
-                .model("text-davinci-003")
-                .echo(false)
+                .messages(List.of(settingsMessage, instructionMessage))
+                .model("gpt-3.5-turbo")
                 .maxTokens(maxToken)
                 .build();
 
         final var blogPostRef = new AtomicReference<BlogPost>();
 
-        openAiService.createCompletion(completionRequest)
+        openAiService.createChatCompletion(completionRequest)
                 .getChoices().forEach(completionChoice -> {
-                    final var logString = String.format("Completion result %s (%s):\n%s",
+                    final var logString = String.format("Completion result %s:\n%s",
                             completionChoice.getIndex(),
-                            completionChoice.getFinish_reason(),
-                            completionChoice.getText());
+                            completionChoice.getMessage());
                     log.log(logString);
                     if (blogPostRef.get() == null) {
                         blogPostRef.set(parsePostFromResponse(
                                 blogPostOptions.getAuthorId(),
                                 blogPostOptions.getPostCategory(),
-                                completionChoice.getText()));
+                                completionChoice.getMessage().getContent()));
                     }
                 });
 
@@ -69,7 +82,12 @@ public class CompletionService {
         if (matcher.find()) {
             final var title = matcher.group(1).trim();
             final var excerpt = matcher.group(2).trim();
-            final var review = matcher.group(3).trim();
+
+            var review = matcher.group(3).trim();
+            review = StringUtils.replaceIgnoreCase(review, "conclusion:", "");
+            review = review.trim();
+
+
             return BlogPost.builder()
                     .title(title)
                     .excerpt(excerpt)
