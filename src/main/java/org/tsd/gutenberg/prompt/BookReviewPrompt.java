@@ -80,6 +80,7 @@ public class BookReviewPrompt extends Prompt {
                 + "and conclude with why someone should read it. Find a way to make the book relevant to people who lift weights. "
                 + "Conclude the blog post with an invitation for readers to comment on what they read today and what they did in the gym. "
                 + "You must write only one blog post, not multiple. "
+                + "The title of the blog post must include the title of the book. "
                 + "Your response should be in the following format:\n"
                 + "Title:\n"
                 + "Excerpt:\n"
