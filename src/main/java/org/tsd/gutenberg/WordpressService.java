@@ -3,7 +3,6 @@ package org.tsd.gutenberg;
 import com.afrozaar.wordpress.wpapi.v2.Wordpress;
 import com.afrozaar.wordpress.wpapi.v2.config.ClientConfig;
 import com.afrozaar.wordpress.wpapi.v2.config.ClientFactory;
-import com.afrozaar.wordpress.wpapi.v2.model.Guid;
 import com.afrozaar.wordpress.wpapi.v2.model.Media;
 import com.afrozaar.wordpress.wpapi.v2.model.PostStatus;
 import com.afrozaar.wordpress.wpapi.v2.model.builder.ContentBuilder;
@@ -63,16 +62,12 @@ public class WordpressService {
     private Optional<Long> uploadMedia(Wordpress wpClient, File imageFile) {
         try {
             final var media = new Media();
-            media.setGuid(new Guid());
-            media.setId(System.currentTimeMillis());
             media.setTitle(TitleBuilder.aTitle().withRendered(Long.toString(System.currentTimeMillis())).build());
             media.setMediaType("image");
             media.setMimeType("image/png");
             media.setCaption("Light weight baby.");
-
-            final var resource = new FileSystemResource(imageFile);
-            wpClient.createMedia(media, resource);
-            return Optional.of(media.getId());
+            final var uploadedMedia = wpClient.createMedia(media, new FileSystemResource(imageFile));
+            return Optional.of(uploadedMedia.getId());
         } catch (Exception e) {
             log.log("Error uploading media: " + e.getMessage());
             e.printStackTrace();
