@@ -19,7 +19,7 @@ Resources:
       Handler: org.tsd.gutenberg.GutenbergRequestHandler
       Runtime: java11
       MemorySize: 256
-      Timeout: 90
+      Timeout: 120
       Role: !GetAtt GutenbergLambdaExecutionRole.Arn
       Environment:
         Variables:
@@ -62,8 +62,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: "A rule to trigger the lambda function with a cron expression."
-#      ScheduleExpression: "cron(0 0/6 * * ? *)" # Trigger every 6 hours
-      ScheduleExpression: "cron(0/3 * * * ? *)" # Trigger every 6 hours
+      ScheduleExpression: "cron(0 4 * * ? *)" # Trigger 04:00
       State: "ENABLED"
       Targets:
         - Arn: !GetAtt GutenbergLambdaFunction.Arn
