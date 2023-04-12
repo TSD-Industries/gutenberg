@@ -86,6 +86,4 @@ public class BookReviewPrompt extends Prompt {
                 + "Excerpt:\n"
                 + "Body:\n";
     }
-
-
 }

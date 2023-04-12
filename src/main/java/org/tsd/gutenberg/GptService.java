@@ -85,7 +85,9 @@ public class GptService extends OpenAIService {
             final var excerpt = matcher.group(2).trim();
 
             var review = matcher.group(3).trim();
+            review = excerpt + "\n\n" + review;
             review = StringUtils.replaceIgnoreCase(review, "conclusion:", "");
+            review = StringUtils.replaceIgnoreCase(review, "outro:", "");
             review = review.trim();
 
             return BlogPost.builder()
