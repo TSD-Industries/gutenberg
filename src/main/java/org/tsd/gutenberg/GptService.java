@@ -4,12 +4,15 @@ import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.image.CreateImageRequest;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tsd.gutenberg.prompt.BlogPostOptions;
 import org.tsd.gutenberg.prompt.PostCategory;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Base64;
+import java.net.URI;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -72,7 +75,7 @@ public class GptService extends OpenAIService {
 
     private static BlogPost parsePostFromResponse(Long authorId,
                                                   PostCategory postCategory,
-                                                  byte[] imageBytes,
+                                                  File imageFile,
                                                   String rawResponse) {
         final var pattern = Pattern.compile(".*?Title:(.*?)Excerpt:(.*?)Body:(.*)", Pattern.DOTALL);
         final var matcher = pattern.matcher(rawResponse);
@@ -91,20 +94,19 @@ public class GptService extends OpenAIService {
                     .body(review)
                     .author(authorId)
                     .category(postCategory)
-                    .imageBytes(imageBytes)
+                    .imageFile(imageFile)
                     .build();
         }
 
         return null;
     }
 
-    public Optional<byte[]> generateImage(String prompt) {
+    public Optional<File> generateImage(String prompt) {
         log.log("Generating image with prompt: " + prompt);
 
         final var request = CreateImageRequest.builder()
                 .prompt(prompt)
                 .size("1024x1024")
-                .responseFormat("b64_json")
                 .n(1)
                 .build();
 
@@ -113,8 +115,11 @@ public class GptService extends OpenAIService {
         if (imageResult.getData() != null && !imageResult.getData().isEmpty()) {
             log.log("Image generation successful, downloading...");
             try {
-                byte[] imageBytes = Base64.getDecoder().decode(imageResult.getData().get(0).getB64Json());
-                return Optional.of(imageBytes);
+                final var file = Files.createTempFile("tempImg", ".png").toFile();
+                FileUtils.copyInputStreamToFile(
+                        URI.create(imageResult.getData().get(0).getUrl()).toURL().openConnection().getInputStream(),
+                        file);
+                return Optional.of(file);
             } catch (Exception e) {
                 log.log("Error generating image: " + e.getMessage());
                 e.printStackTrace();
