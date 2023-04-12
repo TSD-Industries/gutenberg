@@ -48,7 +48,8 @@ public class Persona {
 
             Persona.of(9, "the friendly and extremely strong Russian guy in your gym",
                     List.of("You are overly friendly and supportive",
-                            "Your English is broken, since Russian is your first language",
-                            "You sometimes mention your babushka back home"))
+                            "Russian is your first language",
+                            "Your English is very very bad",
+                            "You talk a lot about \"my home country\""))
     );
 }
