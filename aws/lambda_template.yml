@@ -58,19 +58,48 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: arn:aws:logs:us-east-1:805215575150:log-group:*
-  GutenbergLambdaEventRule:
+  GutenbergLambdaBookReviewEventRule:
     Type: AWS::Events::Rule
     Properties:
-      Description: "A rule to trigger the lambda function with a cron expression."
+      Name: "Book Review Cron Rule"
+      Description: "Write a book review at 4AM UTC."
       ScheduleExpression: "cron(0 4 * * ? *)" # Trigger 04:00
       State: "ENABLED"
+      EventPattern:
+        source:
+          - scheduled.bookreview.source
+        detail-type:
+          - Book Review
       Targets:
         - Arn: !GetAtt GutenbergLambdaFunction.Arn
           Id: "GutenbergLambdaTarget"
-  PermissionForEventsToInvokeGutenbergLambdaFunction:
+  GutenbergLambdaSisyphusEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: "Sisyphus Cron Rule"
+      Description: "Write a Sisyphus column Saturday at 7AM UTC."
+#      ScheduleExpression: "cron(0 7 * * SAT *)" # Trigger 07:00 Saturdays
+      ScheduledExpression: "cron(0/3 * * ? *)"
+      State: "ENABLED"
+      EventPattern:
+        source:
+          - scheduled.sisyphus.source
+        detail-type:
+          - Sisyphus
+      Targets:
+        - Arn: !GetAtt GutenbergLambdaFunction.Arn
+          Id: "GutenbergLambdaTarget"
+  PermissionForEventsToInvokeGutenbergBookReviewLambdaFunction:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !Ref GutenbergLambdaFunction
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
-      SourceArn: !GetAtt GutenbergLambdaEventRule.Arn
+      SourceArn: !GetAtt GutenbergLambdaBookReviewEventRule.Arn
+  PermissionForEventsToInvokeGutenbergSisyphusLambdaFunction:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GutenbergLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt GutenbergLambdaSisyphusEventRule.Arn

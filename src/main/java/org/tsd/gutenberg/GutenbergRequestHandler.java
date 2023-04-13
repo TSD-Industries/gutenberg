@@ -63,7 +63,8 @@ public class GutenbergRequestHandler implements RequestHandler<Object, Object> {
                 .build();
     }
 
-    private static boolean isScheduledEvent(JsonNode jsonNode) {
+    private boolean isScheduledEvent(JsonNode jsonNode) {
+        log.log("Checking if scheduled event: " + jsonNode.toString());
         return jsonNode.has(SOURCE_FIELD)
                 && jsonNode.get(SOURCE_FIELD).getNodeType().equals(JsonNodeType.STRING)
                 && SOURCE_EVENTS.equalsIgnoreCase(jsonNode.get(SOURCE_FIELD).asText());
