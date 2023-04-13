@@ -61,7 +61,7 @@ Resources:
   GutenbergLambdaBookReviewEventRule:
     Type: AWS::Events::Rule
     Properties:
-      Name: "Book Review Cron Rule"
+      Name: "BookReviewCronRule"
       Description: "Write a book review at 4AM UTC."
       ScheduleExpression: "cron(0 4 * * ? *)" # Trigger 04:00
       State: "ENABLED"
@@ -76,7 +76,7 @@ Resources:
   GutenbergLambdaSisyphusEventRule:
     Type: AWS::Events::Rule
     Properties:
-      Name: "Sisyphus Cron Rule"
+      Name: "SisyphusCronRule"
       Description: "Write a Sisyphus column Saturday at 7AM UTC."
 #      ScheduleExpression: "cron(0 7 * * SAT *)" # Trigger 07:00 Saturdays
       ScheduleExpression: "cron(0/3 * * ? *)"
