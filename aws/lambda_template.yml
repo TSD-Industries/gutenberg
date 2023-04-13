@@ -79,7 +79,7 @@ Resources:
       Name: "Sisyphus Cron Rule"
       Description: "Write a Sisyphus column Saturday at 7AM UTC."
 #      ScheduleExpression: "cron(0 7 * * SAT *)" # Trigger 07:00 Saturdays
-      ScheduledExpression: "cron(0/3 * * ? *)"
+      ScheduleExpression: "cron(0/3 * * ? *)"
       State: "ENABLED"
       EventPattern:
         source:
