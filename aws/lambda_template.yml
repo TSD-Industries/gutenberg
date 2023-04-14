@@ -70,6 +70,9 @@ Resources:
           - scheduled.bookreview.source
         detail-type:
           - Book Review
+        detail:
+          scheduledEventType:
+            - book_review
       Targets:
         - Arn: !GetAtt GutenbergLambdaFunction.Arn
           Id: "GutenbergLambdaTarget"
@@ -86,6 +89,9 @@ Resources:
           - scheduled.sisyphus.source
         detail-type:
           - Sisyphus
+        detail:
+          scheduledEventType:
+            - sisyphus
       Targets:
         - Arn: !GetAtt GutenbergLambdaFunction.Arn
           Id: "GutenbergLambdaTarget"
