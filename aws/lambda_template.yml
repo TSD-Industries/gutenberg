@@ -66,10 +66,6 @@ Resources:
       ScheduleExpression: "cron(0 4 * * ? *)" # Trigger 04:00
       State: "ENABLED"
       EventPattern:
-        source:
-          - scheduled.bookreview.source
-        detail-type:
-          - Book Review
         detail:
           scheduledEventType:
             - book_review
@@ -85,10 +81,6 @@ Resources:
       ScheduleExpression: "cron(0/3 * * * ? *)"
       State: "ENABLED"
       EventPattern:
-        source:
-          - scheduled.sisyphus.source
-        detail-type:
-          - Sisyphus
         detail:
           scheduledEventType:
             - sisyphus
