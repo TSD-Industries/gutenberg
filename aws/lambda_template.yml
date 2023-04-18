@@ -12,11 +12,11 @@ Parameters:
     Type: String
 
 Resources:
-  GutenbergLambdaFunction:
+  GutenbergBookReviewLambda:
     Type: 'AWS::Serverless::Function'
     Properties:
       CodeUri: ../target/lambda.jar
-      Handler: org.tsd.gutenberg.GutenbergRequestHandler
+      Handler: org.tsd.gutenberg.handler.BookReviewRequestHandler
       Runtime: java11
       MemorySize: 256
       Timeout: 120
@@ -28,10 +28,31 @@ Resources:
           WP_REST_USER: !Ref WpRestUser
           OPEN_AI_API_KEY: !Ref OpenAiApiKey
       Events:
-        HelloWorldApi:
+        ExecuteApi:
           Type: Api
           Properties:
-            Path: /hello
+            Path: /execute
+            Method: GET
+  GutenbergSisyphusLambda:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      CodeUri: ../target/lambda.jar
+      Handler: org.tsd.gutenberg.SisyphusRequestHandler
+      Runtime: java11
+      MemorySize: 256
+      Timeout: 120
+      Role: !GetAtt GutenbergLambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          WP_URL: !Ref WpUrl
+          WP_REST_PASSWORD: !Ref WpRestPassword
+          WP_REST_USER: !Ref WpRestUser
+          OPEN_AI_API_KEY: !Ref OpenAiApiKey
+      Events:
+        ExecuteApi:
+          Type: Api
+          Properties:
+            Path: /execute
             Method: GET
   GutenbergLambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -65,12 +86,8 @@ Resources:
       Description: "Write a book review at 4AM UTC."
       ScheduleExpression: "cron(0 4 * * ? *)" # Trigger 04:00
       State: "ENABLED"
-      EventPattern:
-        detail:
-          scheduledEventType:
-            - book_review
       Targets:
-        - Arn: !GetAtt GutenbergLambdaFunction.Arn
+        - Arn: !GetAtt GutenbergBookReviewLambda.Arn
           Id: "GutenbergLambdaTarget"
   GutenbergLambdaSisyphusEventRule:
     Type: AWS::Events::Rule
@@ -80,24 +97,20 @@ Resources:
 #      ScheduleExpression: "cron(0 7 * * SAT *)" # Trigger 07:00 Saturdays
       ScheduleExpression: "cron(0/3 * * * ? *)"
       State: "ENABLED"
-      EventPattern:
-        detail:
-          scheduledEventType:
-            - sisyphus
       Targets:
-        - Arn: !GetAtt GutenbergLambdaFunction.Arn
+        - Arn: !GetAtt GutenbergSisyphusLambda.Arn
           Id: "GutenbergLambdaTarget"
   PermissionForEventsToInvokeGutenbergBookReviewLambdaFunction:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref GutenbergLambdaFunction
+      FunctionName: !Ref GutenbergBookReviewLambda
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
       SourceArn: !GetAtt GutenbergLambdaBookReviewEventRule.Arn
   PermissionForEventsToInvokeGutenbergSisyphusLambdaFunction:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref GutenbergLambdaFunction
+      FunctionName: !Ref GutenbergSisyphusLambda
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
       SourceArn: !GetAtt GutenbergLambdaSisyphusEventRule.Arn

@@ -2,8 +2,8 @@ package org.tsd.gutenberg.test;
 
 import com.amazonaws.services.lambda.runtime.LambdaRuntime;
 import org.junit.jupiter.api.Test;
-import org.tsd.gutenberg.BlogPostGenerator;
 import org.tsd.gutenberg.GptService;
+import org.tsd.gutenberg.generate.BlogPostGenerator;
 import org.tsd.gutenberg.prompt.BookReviewPrompt;
 import org.tsd.gutenberg.prompt.Persona;
 
