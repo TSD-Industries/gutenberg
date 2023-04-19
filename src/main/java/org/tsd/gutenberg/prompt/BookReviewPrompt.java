@@ -52,6 +52,8 @@ public class BookReviewPrompt extends Prompt {
         final var book = getRandomBook();
         final var persona = RandomUtils.nextDouble() > 0.25 ? Persona.random() : null;
 
+        // TODO: generate and upload file.
+
         return BlogPostOptions.builder()
                 .authorId(persona == null ? null : persona.getWordPressUserId())
                 .postCategory(PostCategory.BOOK_REVIEW)

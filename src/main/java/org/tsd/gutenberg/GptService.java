@@ -56,15 +56,10 @@ public class GptService extends OpenAIService {
                     log.log(logString);
 
                     if (blogPostRef.get() == null) {
-                        final var postMediaMaybe
-                                = generateImage(blogPostOptions.getImageGenerationPrompt());
-
-                        log.log("Generated image URL: " + postMediaMaybe.orElse(null));
-
                         blogPostRef.set(parsePostFromResponse(
                                 blogPostOptions.getAuthorId(),
                                 blogPostOptions.getPostCategory(),
-                                postMediaMaybe.orElse(null),
+                                blogPostOptions.getMedia(),
                                 completionChoice.getMessage().getContent()));
                     }
                 });
