@@ -16,7 +16,7 @@ Resources:
     Type: 'AWS::Serverless::Function'
     Properties:
       CodeUri: ../target/lambda.jar
-      Handler: org.tsd.gutenberg.handler.BookReviewRequestHandler
+      Handler: org.tsd.gutenberg.handler.GenericBlogPostRequestHandler
       Runtime: java11
       MemorySize: 256
       Timeout: 120
@@ -31,13 +31,13 @@ Resources:
         ExecuteApi:
           Type: Api
           Properties:
-            Path: /bookReview
+            Path: /generic
             Method: GET
   GutenbergSisyphusLambda:
     Type: 'AWS::Serverless::Function'
     Properties:
       CodeUri: ../target/lambda.jar
-      Handler: org.tsd.gutenberg.handler.SisyphusRequestHandler
+      Handler: org.tsd.gutenberg.handler.SisyphusBlogPostRequestHandler
       Runtime: java11
       MemorySize: 256
       Timeout: 120
