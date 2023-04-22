@@ -2,6 +2,7 @@ package org.tsd.gutenberg.handler;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
+import com.amazonaws.services.lambda.runtime.LambdaRuntime;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,8 +10,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import org.tsd.gutenberg.GptService;
 import org.tsd.gutenberg.WordpressService;
 import org.tsd.gutenberg.WpInfo;
-import org.tsd.gutenberg.generate.BlogPostGenerator;
-import org.tsd.gutenberg.prompt.BlogPostOptions;
+import org.tsd.gutenberg.prompt.BlogPostGenerationSettings;
 
 public abstract class GutenbergRequestHandler implements RequestHandler<Object, Object> {
 
@@ -18,18 +18,31 @@ public abstract class GutenbergRequestHandler implements RequestHandler<Object, 
     protected static final String SOURCE_EVENTS = "aws.events";
 
     protected final ObjectMapper objectMapper = new ObjectMapper();
-    protected final BlogPostGenerator blogPostGenerator;
     protected GptService gptService;
     protected WordpressService wordpressService;
 
-    protected LambdaLogger log;
+    protected LambdaLogger log = LambdaRuntime.getLogger();
 
-    public GutenbergRequestHandler(BlogPostGenerator blogPostGenerator) {
-        this.blogPostGenerator = blogPostGenerator;
+    public GutenbergRequestHandler() {
     }
 
-    protected BlogPostOptions generateBlogPost() throws Exception {
-        return blogPostGenerator.generate();
+    abstract BlogPostGenerationSettings buildBlogPostSettings() throws Exception;
+
+    protected void generateAndPost(Context context) {
+        try {
+            initialize(context);
+            final var blogPostSettings = buildBlogPostSettings();
+            final var blogPostMaybe = gptService.createBlogPost(blogPostSettings);
+
+            if (blogPostMaybe.isPresent()) {
+                log.log("Creating blog post:\n" + blogPostMaybe.get());
+                wordpressService.post(blogPostMaybe.get());
+                log.log("Successfully created blog post.");
+            }
+        } catch (Exception e) {
+            log.log("Error creating blog post: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     protected static WpInfo wpInfo() {
@@ -50,6 +63,6 @@ public abstract class GutenbergRequestHandler implements RequestHandler<Object, 
     protected void initialize(Context context) {
         this.log = context.getLogger();
         this.gptService = new GptService(log);
-        this.wordpressService = new WordpressService(log);
+        this.wordpressService = new WordpressService(log, wpInfo());
     }
 }

@@ -6,7 +6,7 @@ import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.image.CreateImageRequest;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.tsd.gutenberg.prompt.BlogPostOptions;
+import org.tsd.gutenberg.prompt.BlogPostGenerationSettings;
 import org.tsd.gutenberg.prompt.PostCategory;
 
 import java.io.File;
@@ -25,7 +25,7 @@ public class GptService extends OpenAIService {
         super(log);
     }
 
-    public Optional<BlogPost> createBlogPost(BlogPostOptions blogPostOptions) throws IOException {
+    public Optional<BlogPost> createBlogPost(BlogPostGenerationSettings blogPostOptions) throws IOException {
         log.log("Creating blog post with options: " + blogPostOptions);
 
         /*
@@ -59,7 +59,7 @@ public class GptService extends OpenAIService {
                         blogPostRef.set(parsePostFromResponse(
                                 blogPostOptions.getAuthorId(),
                                 blogPostOptions.getPostCategory(),
-                                blogPostOptions.getMedia(),
+                                blogPostOptions.getMediaId(),
                                 completionChoice.getMessage().getContent()));
                     }
                 });
@@ -70,7 +70,7 @@ public class GptService extends OpenAIService {
 
     private static BlogPost parsePostFromResponse(Long authorId,
                                                   PostCategory postCategory,
-                                                  File imageFile,
+                                                  Long mediaId,
                                                   String rawResponse) {
         final var pattern = Pattern.compile(".*?Title:(.*?)Excerpt:(.*?)Body:(.*)", Pattern.DOTALL);
         final var matcher = pattern.matcher(rawResponse);
@@ -91,7 +91,7 @@ public class GptService extends OpenAIService {
                     .body(review)
                     .author(authorId)
                     .category(postCategory)
-                    .imageFile(imageFile)
+                    .imageMediaId(mediaId)
                     .build();
         }
 

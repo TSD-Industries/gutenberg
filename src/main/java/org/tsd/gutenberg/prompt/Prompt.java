@@ -7,5 +7,5 @@ public abstract class Prompt {
         this.postCategory = postCategory;
     }
 
-    public abstract BlogPostOptions options() throws Exception;
+    public abstract BlogPostGenerationSettings options() throws Exception;
 }

@@ -21,26 +21,25 @@ public class WordpressService {
     private static final List<Long> STOCK_MEDIA_ID = List.of(264L);
 
     private final LambdaLogger log;
+    private final Wordpress wpClient;
 
-    public WordpressService(LambdaLogger log) {
+    public WordpressService(LambdaLogger log, WpInfo wpInfo) {
         this.log = log;
-    }
-
-    private static long randomStockImage() {
-        return STOCK_MEDIA_ID.get(RandomUtils.nextInt(0, STOCK_MEDIA_ID.size()));
-    }
-
-    public void post(WpInfo wpInfo, BlogPost blogPost) {
-        final var wpClient = ClientFactory
+        this.wpClient = ClientFactory
                 .fromConfig(ClientConfig.of(
                         wpInfo.getBaseUrl(),
                         wpInfo.getUsername(),
                         wpInfo.getPassword(),
                         true,
                         true));
+    }
 
-        final Long mediaId = blogPost.getImageFile() == null
-                ? randomStockImage() : uploadMedia(wpClient, blogPost.getImageFile()).orElse(randomStockImage());
+    private static long randomStockImage() {
+        return STOCK_MEDIA_ID.get(RandomUtils.nextInt(0, STOCK_MEDIA_ID.size()));
+    }
+
+    public void post(BlogPost blogPost) {
+        final var mediaId = blogPost.getImageMediaId() == null ? randomStockImage() : blogPost.getImageMediaId();
 
         final var newPost = PostBuilder.aPost()
                 .withTitle(TitleBuilder.aTitle().withRendered(blogPost.getTitle()).build())
@@ -59,7 +58,7 @@ public class WordpressService {
         }
     }
 
-    private Optional<Long> uploadMedia(Wordpress wpClient, File imageFile) {
+    public Optional<Long> uploadMedia(File imageFile) {
         try {
             final var media = new Media();
             media.setTitle(TitleBuilder.aTitle().withRendered(Long.toString(System.currentTimeMillis())).build());

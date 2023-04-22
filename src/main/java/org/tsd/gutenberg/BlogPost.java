@@ -4,8 +4,6 @@ import lombok.Builder;
 import lombok.Data;
 import org.tsd.gutenberg.prompt.PostCategory;
 
-import java.io.File;
-
 @Data
 @Builder
 public class BlogPost {
@@ -14,5 +12,5 @@ public class BlogPost {
     private final String excerpt;
     private final String body;
     private final PostCategory category;
-    private final File imageFile;
+    private final Long imageMediaId;
 }

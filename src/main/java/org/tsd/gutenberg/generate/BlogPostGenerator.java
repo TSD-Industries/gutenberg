@@ -1,7 +1,7 @@
 package org.tsd.gutenberg.generate;
 
-import org.tsd.gutenberg.prompt.BlogPostOptions;
+import org.tsd.gutenberg.prompt.BlogPostGenerationSettings;
 
 public interface BlogPostGenerator {
-    BlogPostOptions generate() throws Exception;
+    BlogPostGenerationSettings generate() throws Exception;
 }

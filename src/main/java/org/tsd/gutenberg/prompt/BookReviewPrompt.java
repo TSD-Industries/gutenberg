@@ -4,6 +4,8 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.tsd.gutenberg.GptService;
+import org.tsd.gutenberg.WordpressService;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,8 +17,13 @@ public class BookReviewPrompt extends Prompt {
     private static final int TITLE_RECORD_IDX = 3;
     private static final int AUTHOR_RECORD_IDX = 11;
 
-    public BookReviewPrompt() {
+    private final GptService gptService;
+    private final WordpressService wordpressService;
+
+    public BookReviewPrompt(GptService gptService, WordpressService wordpressService) {
         super(PostCategory.BOOK_REVIEW);
+        this.gptService = gptService;
+        this.wordpressService = wordpressService;
     }
 
     private String getRandomBook() throws IOException {
@@ -48,18 +55,21 @@ public class BookReviewPrompt extends Prompt {
     }
 
     @Override
-    public BlogPostOptions options() throws Exception {
+    public BlogPostGenerationSettings options() throws Exception {
         final var book = getRandomBook();
         final var persona = RandomUtils.nextDouble() > 0.25 ? Persona.random() : null;
 
-        // TODO: generate and upload file.
+        final var mediaId = new AtomicReference<Long>();
+        final var generatedImgMaybe = gptService.generateImage(ImagePrompts.randomImagePrompt());
 
-        return BlogPostOptions.builder()
+        generatedImgMaybe.flatMap(wordpressService::uploadMedia).ifPresent(mediaId::set);
+
+        return BlogPostGenerationSettings.builder()
                 .authorId(persona == null ? null : persona.getWordPressUserId())
                 .postCategory(PostCategory.BOOK_REVIEW)
                 .settingsMessage(generateSettingsText(persona))
                 .instructionMessage(generateInstructionText(book))
-                .imageGenerationPrompt(ImagePrompts.randomImagePrompt())
+                .mediaId(mediaId.get())
                 .build();
     }
 
