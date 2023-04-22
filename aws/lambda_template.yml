@@ -37,7 +37,7 @@ Resources:
     Type: 'AWS::Serverless::Function'
     Properties:
       CodeUri: ../target/lambda.jar
-      Handler: org.tsd.gutenberg.SisyphusRequestHandler
+      Handler: org.tsd.gutenberg.handler.SisyphusRequestHandler
       Runtime: java11
       MemorySize: 256
       Timeout: 120
