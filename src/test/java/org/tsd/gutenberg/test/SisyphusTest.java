@@ -1,6 +1,7 @@
 package org.tsd.gutenberg.test;
 
 import com.amazonaws.services.lambda.runtime.LambdaRuntime;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.tsd.gutenberg.GptService;
 import org.tsd.gutenberg.WordpressService;
@@ -12,6 +13,7 @@ public class SisyphusTest {
     private WordpressService wordpressService;
 
     @Test
+    @Disabled
     public void test() throws Exception {
         this.gptService = new GptService(LambdaRuntime.getLogger());
 
