@@ -84,7 +84,7 @@ Resources:
     Properties:
       Name: "BookReviewCronRule"
       Description: "Write a book review at 4AM UTC."
-      ScheduleExpression: "cron(0 4 * * ? *)" # Trigger 04:00
+      ScheduleExpression: "cron(0 4 * * 1-5 *)" # Trigger 04:00 MON-FRI
       State: "ENABLED"
       Targets:
         - Arn: !GetAtt GutenbergBookReviewLambda.Arn
@@ -94,8 +94,7 @@ Resources:
     Properties:
       Name: "SisyphusCronRule"
       Description: "Write a Sisyphus column Saturday at 7AM UTC."
-#      ScheduleExpression: "cron(0 7 * * SAT *)" # Trigger 07:00 Saturdays
-      ScheduleExpression: "cron(0/3 * * * ? *)"
+      ScheduleExpression: "cron(0 7 * * SAT *)" # Trigger 07:00 SAT
       State: "ENABLED"
       Targets:
         - Arn: !GetAtt GutenbergSisyphusLambda.Arn

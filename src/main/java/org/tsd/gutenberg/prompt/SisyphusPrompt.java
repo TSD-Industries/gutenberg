@@ -24,7 +24,7 @@ public class SisyphusPrompt extends Prompt {
     }
 
     private static String settingsText() {
-        return "Pretend you are Sisyphus. You are a blogger who tries to give "
+        return "Pretend you are a blogger. You are a blogger who tries to give "
                 + "good advice to readers, but you are melancholy because you know "
                 + "your advice will go unheeded by others and they will never "
                 + "make progress. You are cursed to forever give advice to people "
