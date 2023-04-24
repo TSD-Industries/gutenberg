@@ -28,9 +28,8 @@ public abstract class GutenbergRequestHandler implements RequestHandler<Object, 
 
     abstract BlogPostGenerationSettings buildBlogPostSettings() throws Exception;
 
-    protected void generateAndPost(Context context) {
+    protected void generateAndPost() {
         try {
-            initialize(context);
             final var blogPostSettings = buildBlogPostSettings();
             final var blogPostMaybe = gptService.createBlogPost(blogPostSettings);
 

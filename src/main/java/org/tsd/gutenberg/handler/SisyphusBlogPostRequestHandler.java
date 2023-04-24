@@ -16,8 +16,9 @@ public class SisyphusBlogPostRequestHandler extends GutenbergRequestHandler {
     @Override
     public Object handleRequest(Object o, Context context) {
         log.log("Handling Sisyphus blog request (" + o.getClass() + "):\n" + o);
+        initialize(context);
         this.sisyphusBlogPostGenerator = new SisyphusBlogPostGenerator();
-        generateAndPost(context);
+        generateAndPost();
         return null;
     }
 }

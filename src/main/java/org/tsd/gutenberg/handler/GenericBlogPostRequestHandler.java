@@ -11,8 +11,9 @@ public class GenericBlogPostRequestHandler extends GutenbergRequestHandler {
     @Override
     public Object handleRequest(Object o, Context context) {
         log.log("Handling generic blog request (" + o.getClass() + "):\n" + o);
+        initialize(context);
         this.genericBlogPostGenerator = new GenericBlogPostGenerator(gptService, wordpressService);
-        generateAndPost(context);
+        generateAndPost();
         return null;
     }
 
